@@ -26,6 +26,8 @@ htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
+notebooks/data/
+notebooks/models/
 
 # Environment variables
 .env
@@ -46,6 +48,7 @@ data/**/*
 
 # Logs
 *.log
+*.out
 
 # IDE / OS
 .vscode/
