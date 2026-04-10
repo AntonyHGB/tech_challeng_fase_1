@@ -36,6 +36,7 @@ DEFAULT_METRICS_PATH = Path("models/baseline_metrics.csv")
 @dataclass(frozen=True)
 class BusinessMetricConfig:
     """Parâmetros simples para converter predição em valor de negócio."""
+
     retention_success_rate: float = 0.35
     churn_prevention_value: float = 300.0
     contact_cost: float = 12.0
@@ -70,7 +71,6 @@ def build_preprocessor(x: pd.DataFrame) -> ColumnTransformer:
             ("cat", categorical_pipe, categorical_cols),
         ]
     )
-
 
 
 def compute_business_metric(
