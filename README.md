@@ -5,9 +5,8 @@ Estrutura inicial de projeto de Machine Learning preparada para:
 - **PyTorch** (rede neural MLP)
 - **Scikit-Learn** (pipelines e modelos baseline)
 - **MLflow** (tracking de experimentos)
-- **FastAPI** (API de inferência)
 
-> Este repositório está na fase de **estruturação**. A implementação dos códigos será adicionada posteriormente.
+> Status atual: **Etapa 1 concluída**
 
 ---
 
@@ -50,7 +49,7 @@ Estrutura inicial de projeto de Machine Learning preparada para:
 ### 1) Clonar o repositório
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
+git clone 
 cd tech_challeng_fase_1
 ```
 
@@ -79,7 +78,7 @@ pip install -e .[dev]
 
 ---
 
-## Execução (quando os módulos forem implementados)
+## Execução da Etapa 1
 
 ### Rodar testes
 
@@ -87,31 +86,29 @@ pip install -e .[dev]
 pytest
 ```
 
-### Rodar lint
+### Rodar pipeline baseline (Dummy + Regressão Logística)
 
 ```bash
-ruff check .
+python -m churn_predictor.pipelines.baselines
 ```
 
-### Rodar formatação (opcional)
-
-```bash
-ruff format .
-```
-
-### Subir API FastAPI (planejado)
-
-```bash
-uvicorn src.api.main:app --reload
-```
-
-### Executar tracking com MLflow (planejado)
+### Abrir tracking com MLflow
 
 ```bash
 mlflow ui
 ```
 
----
+### Notebook de EDA
+
+- Arquivo: `notebooks/01_eda_baselines.ipynb`
+- Cobre: carga/limpeza, qualidade, distribuições, correlações, métrica de negócio e execução de baselines.
+
+### Artefatos esperados
+
+- `notebooks/models/baseline_metrics.csv`
+- `notebooks/models/reports/*.json`
+- `notebooks/mlruns/` com parâmetros, métricas e metadados de versão do dataset
+- `docs/ml_canvas.md` com definição de stakeholders, SLOs e métricas
 
 ## Dependências principais
 
@@ -122,31 +119,3 @@ mlflow ui
 - `uvicorn`
 
 Configuração centralizada no `pyproject.toml` (dependências, linting e pytest).
-
----
-
-## Convenções de versionamento e commits
-
-- Commits pequenos e semânticos.
-- Histórico limpo, focado por etapa:
-  - estrutura base
-  - configuração do projeto
-  - documentação
-  - evolução de código
-
----
-
-## Próximos passos (implementação)
-
-1. Definir schema de dados e pipeline de features.
-2. Criar baseline com Scikit-Learn.
-3. Implementar MLP com PyTorch.
-4. Integrar tracking com MLflow.
-5. Expor inferência via FastAPI.
-6. Cobrir fluxo com testes automatizados.
-
----
-
-## Licença
-
-Definir licença do projeto na próxima etapa (`LICENSE`).
