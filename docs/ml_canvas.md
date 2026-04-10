@@ -30,7 +30,27 @@ Priorizar clientes para campanhas de retenção (contato ativo, oferta, benefíc
 - probabilidade de churn em $[0,1]$
 - classe binária (churn / não churn) a partir de threshold operacional
 
-## 5) Restrições e riscos
+## 5) Métricas de sucesso
+
+### Técnicas
+- auc-roc
+- pr-auc
+- f1-score
+
+### Negócio (estimada na etapa 1)
+
+$$
+\text{valor\_líquido\_esperado}(t)=TP(t)\cdot p_{\text{retenção}}\cdot V_{\text{churn}}-\big(TP(t)+FP(t)\big)\cdot C_{\text{contato}}
+$$
+
+onde:
+- $TP(t)$: churners corretamente identificados no threshold $t$
+- $FP(t)$: não churners acionados no threshold $t$
+- $p_{\text{retenção}}$: taxa de sucesso da ação de retenção sobre churners contatados
+- $V_{\text{churn}}$: valor recuperado por churn evitado
+- $C_{\text{contato}}$: custo unitário da ação de contato
+
+## 6) Restrições e riscos
 
 - desbalanceamento de classes
 - drift de comportamento de clientes ao longo do tempo
@@ -38,7 +58,7 @@ Priorizar clientes para campanhas de retenção (contato ativo, oferta, benefíc
 - risco de viés por segmentos de clientes
 - qualidade de dados (campos faltantes e inconsistências)
 
-## 6) SLOs propostos (fase inicial)
+## 7) SLOs propostos (fase inicial)
 
 - disponibilidade do serviço de inferência: $\geq 99.5\%$ mensal
 - latência p95 da inferência online: $\leq 200\,ms$
@@ -46,7 +66,7 @@ Priorizar clientes para campanhas de retenção (contato ativo, oferta, benefíc
 - completude do tracking no mlflow: 100% dos runs com parâmetros, métricas e versão do dataset
 - degradacão máxima de auc-roc em produção antes de re-treino: $\leq 5\%$ vs referência validada
 
-## 7) Plano de entrega da etapa 1
+## 8) Plano de entrega da etapa 1
 
 - eda completa no notebook `notebooks/01_eda_baselines.ipynb`
 - baselines com dummyclassifier e regressão logística (scikit-learn)

@@ -13,12 +13,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.dummy import DummyClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    average_precision_score,
-    classification_report,
-    f1_score,
-    roc_auc_score,
-)
+from sklearn.metrics import average_precision_score, classification_report, f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -33,10 +28,14 @@ from churn_predictor.data import (
 from churn_predictor.logging_utils import configure_logging, log_event
 
 LOGGER = logging.getLogger(__name__)
+DEFAULT_DATASET_PATH = Path("data/raw/telco_customer_churn.csv")
+DEFAULT_REPORTS_DIR = Path("models/reports")
+DEFAULT_METRICS_PATH = Path("models/baseline_metrics.csv")
 
 
 @dataclass(frozen=True)
 class BusinessMetricConfig:
+    """Parâmetros simples para converter predição em valor de negócio."""
     retention_success_rate: float = 0.35
     churn_prevention_value: float = 300.0
     contact_cost: float = 12.0
@@ -44,7 +43,11 @@ class BusinessMetricConfig:
 
 
 def build_preprocessor(x: pd.DataFrame) -> ColumnTransformer:
-    # separa features numéricas e categóricas para tratamento dedicado
+    """
+    Cria pré-processamento padrão:
+    - numéricas: imputação mediana + escala
+    - categóricas: imputação mais frequente + one-hot
+    """
     numeric_cols = x.select_dtypes(include=["number"]).columns.tolist()
     categorical_cols = x.select_dtypes(exclude=["number"]).columns.tolist()
 
@@ -54,7 +57,6 @@ def build_preprocessor(x: pd.DataFrame) -> ColumnTransformer:
             ("scaler", StandardScaler()),
         ]
     )
-
     categorical_pipe = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="most_frequent")),
@@ -70,29 +72,32 @@ def build_preprocessor(x: pd.DataFrame) -> ColumnTransformer:
     )
 
 
+
 def compute_business_metric(
     y_true: pd.Series,
     y_score: np.ndarray,
     config: BusinessMetricConfig,
 ) -> Dict[str, float]:
-    # aplica threshold operacional para estimar impacto financeiro da campanha
+    """
+    Calcula impacto financeiro estimado dado um threshold operacional.
+    """
     y_pred = (y_score >= config.threshold).astype(int)
 
     tp = int(((y_true == 1) & (y_pred == 1)).sum())
     fp = int(((y_true == 0) & (y_pred == 1)).sum())
 
-    estimated_retained_customers = tp * config.retention_success_rate
-    estimated_recovered_value = estimated_retained_customers * config.churn_prevention_value
-    estimated_contact_cost = (tp + fp) * config.contact_cost
-    estimated_net_value = estimated_recovered_value - estimated_contact_cost
+    retained_est = tp * config.retention_success_rate
+    recovered_value_est = retained_est * config.churn_prevention_value
+    contact_cost_est = (tp + fp) * config.contact_cost
+    net_value_est = recovered_value_est - contact_cost_est
 
     return {
         "business_tp": float(tp),
         "business_fp": float(fp),
-        "business_retained_customers_est": float(estimated_retained_customers),
-        "business_recovered_value_est": float(estimated_recovered_value),
-        "business_contact_cost_est": float(estimated_contact_cost),
-        "business_net_value_est": float(estimated_net_value),
+        "business_retained_customers_est": float(retained_est),
+        "business_recovered_value_est": round(recovered_value_est, 2),
+        "business_contact_cost_est": round(contact_cost_est, 2),
+        "business_net_value_est": round(net_value_est, 2),
     }
 
 
@@ -102,6 +107,9 @@ def evaluate_model(
     y_test: pd.Series,
     config: BusinessMetricConfig,
 ) -> Dict[str, float]:
+    """
+    Calcula métricas técnicas + métricas de negócio.
+    """
     y_score = model.predict_proba(x_test)[:, 1]
     y_pred = (y_score >= config.threshold).astype(int)
 
@@ -115,6 +123,9 @@ def evaluate_model(
 
 
 def build_model_pipelines(preprocessor: ColumnTransformer) -> Dict[str, Pipeline]:
+    """
+    Define baselines da etapa 1.
+    """
     return {
         "dummy_classifier": Pipeline(
             steps=[
@@ -125,15 +136,7 @@ def build_model_pipelines(preprocessor: ColumnTransformer) -> Dict[str, Pipeline
         "logistic_regression": Pipeline(
             steps=[
                 ("preprocessor", preprocessor),
-                (
-                    "model",
-                    LogisticRegression(
-                        max_iter=500,
-                        solver="lbfgs",
-                        n_jobs=None,
-                        random_state=42,
-                    ),
-                ),
+                ("model", LogisticRegression(max_iter=500, solver="lbfgs", random_state=42)),
             ]
         ),
     }
@@ -151,13 +154,15 @@ def log_run_to_mlflow(
     business_cfg: BusinessMetricConfig,
     output_dir: Path,
 ) -> None:
+    """
+    Salva classification report e registra run no MLflow.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / f"{model_name}_classification_report.json"
 
     y_score = model_pipeline.predict_proba(x_test)[:, 1]
     y_pred = (y_score >= business_cfg.threshold).astype(int)
     report = classification_report(y_test, y_pred, output_dict=True)
-
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     with mlflow.start_run(run_name=model_name):
@@ -189,7 +194,10 @@ def run_baselines(
     random_state: int = 42,
     test_size: float = 0.2,
 ) -> pd.DataFrame:
-    # pipeline ponta a ponta: dados -> treino -> avaliação -> tracking
+    """
+    Fluxo completo da etapa 1:
+    dados -> treino -> avaliação -> tracking -> csv final.
+    """
     configure_logging()
 
     download_dataset_if_needed()
@@ -207,13 +215,13 @@ def run_baselines(
     )
 
     preprocessor = build_preprocessor(x_train)
-    model_pipelines = build_model_pipelines(preprocessor)
+    models = build_model_pipelines(preprocessor)
     business_cfg = BusinessMetricConfig()
 
     mlflow.set_experiment(experiment_name)
 
     rows = []
-    for model_name, model_pipeline in model_pipelines.items():
+    for model_name, model_pipeline in models.items():
         log_event(
             LOGGER,
             "model_training_started",
@@ -232,13 +240,12 @@ def run_baselines(
             x_test=x_test,
             y_test=y_test,
             dataset_hash=dataset_hash,
-            dataset_path=Path("data/raw/telco_customer_churn.csv"),
+            dataset_path=DEFAULT_DATASET_PATH,
             business_cfg=business_cfg,
-            output_dir=Path("models/reports"),
+            output_dir=DEFAULT_REPORTS_DIR,
         )
 
-        row = {"model": model_name, "dataset_version_hash": dataset_hash, **metrics}
-        rows.append(row)
+        rows.append({"model": model_name, "dataset_version_hash": dataset_hash, **metrics})
 
         log_event(
             LOGGER,
@@ -249,8 +256,8 @@ def run_baselines(
         )
 
     metrics_df = pd.DataFrame(rows).sort_values(by="auc_roc", ascending=False)
-    Path("models").mkdir(parents=True, exist_ok=True)
-    metrics_df.to_csv("models/baseline_metrics.csv", index=False)
+    DEFAULT_METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    metrics_df.to_csv(DEFAULT_METRICS_PATH, index=False)
 
     log_event(
         LOGGER,
