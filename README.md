@@ -127,7 +127,33 @@ pytest
 
 ---
 
-## 5) Dependências utilizadas na etapa atual
+## 5) Checklist antes de abrir uma nova PR
+
+Execute estes passos antes de subir uma PR:
+
+1. Garantir branch atualizada com `master` e sem conflitos.
+2. Rodar lint e formatação:
+```bash
+ruff check
+```
+3. Rodar testes:
+```bash
+pytest
+```
+4. Rodar pipeline principal para validar execução ponta a ponta:
+```bash
+python -m churn_predictor.pipelines.baselines
+```
+5. Revisar arquivos alterados:
+```bash
+git status
+git diff --staged
+```
+6. Confirmar mensagem de commit no padrão Conventional Commits (ex.: `feat: ...`, `fix: ...`, `refactor: ...`).
+
+---
+
+## 6) Dependências utilizadas na etapa atual
 
 Dependências de runtime:
 - numpy
