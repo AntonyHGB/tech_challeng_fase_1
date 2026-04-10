@@ -1,121 +1,144 @@
-# ML Tech Challenge — Fase 1
-
-Estrutura inicial de projeto de Machine Learning preparada para:
-
-- **PyTorch** (rede neural MLP)
-- **Scikit-Learn** (pipelines e modelos baseline)
-- **MLflow** (tracking de experimentos)
-
-> Status atual: **Etapa 1 concluída**
+# ML Tech Challenge — Fase 1 (Churn)
 
 ---
 
-## Estrutura do projeto
+## 1) Estrutura do projeto
 
 ```text
 .
 ├── data/
+│  ├── raw/
+│  └── processed/
 ├── docs/
+│  └── ml_canvas.md
 ├── models/
+│  ├── baseline_metrics.csv
+│  └── reports/
 ├── notebooks/
+│  └── 01_eda_baselines.ipynb
 ├── src/
+│  └── churn_predictor/
+│     ├── __init__.py
+│     ├── data.py
+│     ├── logging_utils.py
+│     └── pipelines/
+│        ├── __init__.py
+│        └── baselines.py
 ├── tests/
 ├── .gitignore
 ├── pyproject.toml
+├── requirements.txt
 └── README.md
 ```
 
-### Diretórios
+---
 
-- `src/`: código-fonte do projeto (treinamento, inferência, utilitários).
-- `data/`: dados locais de trabalho (não versionados, exceto `.gitkeep`).
-- `models/`: artefatos de modelos gerados localmente.
-- `tests/`: testes automatizados com `pytest`.
-- `notebooks/`: notebooks de exploração e prototipagem.
-- `docs/`: documentação técnica e funcional.
+## 2) O que cada arquivo principal faz
+
+- `docs/ml_canvas.md`  
+  Define problema de negócio, stakeholders, métricas técnicas e de negócio, riscos e SLOs.
+
+- `notebooks/01_eda_baselines.ipynb`  
+  Notebook da etapa 1 com EDA em tabelas e gráficos + execução dos baselines.
+
+- `src/churn_predictor/data.py`  
+  Download/carregamento do dataset, limpeza básica, split X/y e hash de versão do dataset.
+
+- `src/churn_predictor/logging_utils.py`  
+  Configuração de logging estruturado para pipeline e notebook.
+
+- `src/churn_predictor/pipelines/baselines.py`  
+  Pipeline ponta a ponta: preprocessamento, treino, avaliação técnica/negócio, tracking MLflow e export de métricas.
+
+- `models/baseline_metrics.csv`  
+  Tabela final com métricas dos baselines.
+
+- `models/reports/*.json`  
+  Classification reports por modelo.
+
+- `pyproject.toml`  
+  Configuração central do projeto (dependências, pytest, ruff e empacotamento).
 
 ---
 
-## Requisitos
+## 3) Requisitos
 
-- Python **3.10+**
-- `pip` atualizado
+- Python 3.10+
 - Git
+- pip atualizado
 
 ---
 
-## Setup do ambiente
+## 4) Passo a passo para rodar
 
-### 1) Clonar o repositório
-
+## 4.1 Clonar repositório
 ```bash
-git clone 
+git clone https://github.com/AntonyHGB/tech_challeng_fase_1.git
 cd tech_challeng_fase_1
 ```
 
-### 2) Criar e ativar ambiente virtual
+## 4.2 Criar ambiente virtual
 
-**Windows (PowerShell):**
-
+### Windows (PowerShell)
 ```bash
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-**Windows (cmd):**
-
+### Windows (cmd)
 ```bash
 python -m venv .venv
 .venv\Scripts\activate.bat
 ```
 
-### 3) Instalar dependências
+## 4.3 Instalar dependências
 
+### Opção recomendada (pyproject)
 ```bash
 pip install --upgrade pip
 pip install -e .[dev]
 ```
 
----
-
-## Execução da Etapa 1
-
-### Rodar testes
-
-```bash
-pytest
-```
-
-### Rodar pipeline baseline (Dummy + Regressão Logística)
-
+## 4.4 Rodar pipeline baseline
 ```bash
 python -m churn_predictor.pipelines.baselines
 ```
 
-### Abrir tracking com MLflow
+Saídas esperadas:
+- `models/baseline_metrics.csv`
+- `models/reports/*.json`
+- `mlruns/` (ou `notebooks/mlruns/`, conforme diretório de execução)
 
+## 4.5 Abrir notebook de EDA
+```bash
+jupyter notebook notebooks/01_eda_baselines.ipynb
+```
+
+## 4.6 Abrir interface do MLflow
 ```bash
 mlflow ui
 ```
+Depois abrir no navegador: `http://127.0.0.1:5000`.
 
-### Notebook de EDA
+## 4.7 Rodar testes
+```bash
+pytest
+```
 
-- Arquivo: `notebooks/01_eda_baselines.ipynb`
-- Cobre: carga/limpeza, qualidade, distribuições, correlações, métrica de negócio e execução de baselines.
+---
 
-### Artefatos esperados
+## 5) Dependências utilizadas na etapa atual
 
-- `notebooks/models/baseline_metrics.csv`
-- `notebooks/models/reports/*.json`
-- `notebooks/mlruns/` com parâmetros, métricas e metadados de versão do dataset
-- `docs/ml_canvas.md` com definição de stakeholders, SLOs e métricas
+Dependências de runtime:
+- numpy
+- pandas
+- scikit-learn
+- mlflow
+- matplotlib
+- seaborn
 
-## Dependências principais
-
-- `torch`
-- `scikit-learn`
-- `mlflow`
-- `fastapi`
-- `uvicorn`
-
-Configuração centralizada no `pyproject.toml` (dependências, linting e pytest).
+Dependências de desenvolvimento:
+- pytest
+- pytest-cov
+- ruff
+- jupyter
