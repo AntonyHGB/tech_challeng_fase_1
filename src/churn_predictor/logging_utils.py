@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 
 def configure_logging(level: int = logging.INFO) -> None:
@@ -17,8 +16,8 @@ def log_event(
     message: str,
     *,
     event: str,
-    model: Optional[str] = None,
-    step: Optional[str] = None,
+    model: str | None = None,
+    step: str | None = None,
     level: int = logging.INFO,
 ) -> None:
     """Emit log with consistent structured fields."""

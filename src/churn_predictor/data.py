@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import pandas as pd
 
@@ -28,8 +27,7 @@ def download_dataset_if_needed(
     url: str = DEFAULT_DATA_URL,
     force: bool = False,
 ) -> Path:
-    """
-    Baixa o dataset apenas quando necessário.
+    """Baixa o dataset apenas quando necessário.
 
     - Se o arquivo já existir e force=False, reutiliza o arquivo local.
     - Se force=True, baixa novamente e sobrescreve.
@@ -74,8 +72,7 @@ def load_dataset(data_path: Path = DEFAULT_DATA_PATH) -> pd.DataFrame:
 
 
 def clean_telco_dataset(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Limpeza mínima do dataset da IBM para manter o pipeline simples.
+    """Limpeza mínima do dataset da IBM para manter o pipeline simples.
 
     Regras:
     - converte TotalCharges para numérico (inválidos viram NaN)
@@ -92,9 +89,8 @@ def clean_telco_dataset(df: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def split_xy(df: pd.DataFrame, target_col: str = "Churn") -> Tuple[pd.DataFrame, pd.Series]:
-    """
-    Separa features (X) e target (y).
+def split_xy(df: pd.DataFrame, target_col: str = "Churn") -> tuple[pd.DataFrame, pd.Series]:
+    """Separa features (X) e target (y).
 
     Mapeamento aplicado ao target:
     - Yes -> 1
@@ -109,8 +105,6 @@ def split_xy(df: pd.DataFrame, target_col: str = "Churn") -> Tuple[pd.DataFrame,
 
 
 def dataset_version_hash(df: pd.DataFrame) -> str:
-    """
-    Gera hash determinístico do dataset para rastreamento no MLflow.
-    """
+    """Gera hash determinístico do dataset para rastreamento no MLflow."""
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     return hashlib.sha256(csv_bytes).hexdigest()

@@ -4,7 +4,6 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict
 
 import mlflow
 import numpy as np
@@ -44,8 +43,7 @@ class BusinessMetricConfig:
 
 
 def build_preprocessor(x: pd.DataFrame) -> ColumnTransformer:
-    """
-    Cria pré-processamento padrão:
+    """Cria pré-processamento padrão:
     - numéricas: imputação mediana + escala
     - categóricas: imputação mais frequente + one-hot
     """
@@ -77,10 +75,8 @@ def compute_business_metric(
     y_true: pd.Series,
     y_score: np.ndarray,
     config: BusinessMetricConfig,
-) -> Dict[str, float]:
-    """
-    Calcula impacto financeiro estimado dado um threshold operacional.
-    """
+) -> dict[str, float]:
+    """Calcula impacto financeiro estimado dado um threshold operacional."""
     y_pred = (y_score >= config.threshold).astype(int)
 
     tp = int(((y_true == 1) & (y_pred == 1)).sum())
@@ -106,10 +102,8 @@ def evaluate_model(
     x_test: pd.DataFrame,
     y_test: pd.Series,
     config: BusinessMetricConfig,
-) -> Dict[str, float]:
-    """
-    Calcula métricas técnicas + métricas de negócio.
-    """
+) -> dict[str, float]:
+    """Calcula métricas técnicas + métricas de negócio."""
     y_score = model.predict_proba(x_test)[:, 1]
     y_pred = (y_score >= config.threshold).astype(int)
 
@@ -122,10 +116,8 @@ def evaluate_model(
     return metrics
 
 
-def build_model_pipelines(preprocessor: ColumnTransformer) -> Dict[str, Pipeline]:
-    """
-    Define baselines da etapa 1.
-    """
+def build_model_pipelines(preprocessor: ColumnTransformer) -> dict[str, Pipeline]:
+    """Define baselines da etapa 1."""
     return {
         "dummy_classifier": Pipeline(
             steps=[
@@ -146,7 +138,7 @@ def log_run_to_mlflow(
     *,
     model_name: str,
     model_pipeline: Pipeline,
-    metrics: Dict[str, float],
+    metrics: dict[str, float],
     x_test: pd.DataFrame,
     y_test: pd.Series,
     dataset_hash: str,
@@ -154,9 +146,7 @@ def log_run_to_mlflow(
     business_cfg: BusinessMetricConfig,
     output_dir: Path,
 ) -> None:
-    """
-    Salva classification report e registra run no MLflow.
-    """
+    """Salva classification report e registra run no MLflow."""
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / f"{model_name}_classification_report.json"
 
@@ -194,8 +184,7 @@ def run_baselines(
     random_state: int = 42,
     test_size: float = 0.2,
 ) -> pd.DataFrame:
-    """
-    Fluxo completo da etapa 1:
+    """Fluxo completo da etapa 1:
     dados -> treino -> avaliação -> tracking -> csv final.
     """
     configure_logging()

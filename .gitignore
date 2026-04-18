@@ -44,6 +44,12 @@ models/**/*.pth
 models/**/*.pkl
 models/**/*.joblib
 models/**/*.onnx
+models/*.csv
+models/reports/
+
+# Document files
+*.pdf
+pdf_text.txt
 
 # Data files (keep folder structure only)
 data/**/*
