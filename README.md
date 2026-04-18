@@ -21,9 +21,14 @@
 │     ├── __init__.py
 │     ├── data.py
 │     ├── logging_utils.py
+│     ├── models/
+│     │  ├── __init__.py
+│     │  ├── dataset.py
+│     │  └── mlp.py
 │     └── pipelines/
 │        ├── __init__.py
-│        └── baselines.py
+│        ├── baselines.py
+│        └── neural_network.py
 ├── tests/
 ├── .gitignore
 ├── pyproject.toml
@@ -48,7 +53,13 @@
   Configuração de logging estruturado para pipeline e notebook.
 
 - `src/churn_predictor/pipelines/baselines.py`  
-  Pipeline ponta a ponta: preprocessamento, treino, avaliação técnica/negócio, tracking MLflow e export de métricas.
+  Pipeline ponta a ponta: preprocessamento, treino, avaliação técnica/negócio, tracking MLflow e export de métricas dos modelos clássicos.
+
+- `src/churn_predictor/models/mlp.py` & `dataset.py`
+  Arquitetura da Rede Neural (MLP) em PyTorch e classe `Dataset` customizada para alimentar os tensores.
+
+- `src/churn_predictor/pipelines/neural_network.py`  
+  Pipeline dedicado ao treinamento da MLP com Early Stopping e tracking MLflow.
 
 - `models/baseline_metrics.csv`  
   Tabela final com métricas dos baselines.
@@ -99,13 +110,20 @@ pip install --upgrade pip
 pip install -e .[dev]
 ```
 
-## 4.4 Rodar pipeline baseline
+## 4.4 Rodar pipelines de treinamento
+
+**Baselines Clássicos (Regressão Logística, Dummy):**
 ```bash
 python -m churn_predictor.pipelines.baselines
 ```
 
+**Rede Neural PyTorch (MLP):**
+```bash
+python -m churn_predictor.pipelines.neural_network
+```
+
 Saídas esperadas:
-- `models/baseline_metrics.csv`
+- `models/baseline_metrics.csv` (Atualizado com os novos modelos)
 - `models/reports/*.json`
 - `mlruns/` (ou `notebooks/mlruns/`, conforme diretório de execução)
 
@@ -140,9 +158,10 @@ ruff check
 ```bash
 pytest
 ```
-4. Rodar pipeline principal para validar execução ponta a ponta:
+4. Rodar pipelines principais para validar execução ponta a ponta:
 ```bash
 python -m churn_predictor.pipelines.baselines
+python -m churn_predictor.pipelines.neural_network
 ```
 5. Revisar arquivos alterados:
 ```bash
@@ -162,6 +181,7 @@ Dependências de runtime:
 - mlflow
 - matplotlib
 - seaborn
+- torch
 
 Dependências de desenvolvimento:
 - pytest
