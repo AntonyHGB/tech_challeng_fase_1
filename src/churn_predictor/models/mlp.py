@@ -16,6 +16,7 @@ class ChurnMLP(nn.Module):
     """Arquitetura de Multi-Layer Perceptron para classificação de Churn."""
 
     def __init__(self, input_dim: int, hidden_layers: list[int], dropout_rate: float = 0.2):
+        """Inicializa a arquitetura MLP."""
         super().__init__()
 
         layers = []
@@ -34,18 +35,20 @@ class ChurnMLP(nn.Module):
         self.network = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Executa forward pass pela rede."""
         return self.network(x)
 
 
 class PyTorchMLPWrapper:
     """Wrapper compatível com scikit-learn (possui fit e predict_proba).
+
     Implementa Early Stopping internamente.
     """
 
     def __init__(
         self,
         input_dim: int,
-        hidden_layers: list[int] = [64, 32],
+        hidden_layers: list[int] | None = None,
         dropout_rate: float = 0.2,
         learning_rate: float = 1e-3,
         batch_size: int = 64,
@@ -53,17 +56,20 @@ class PyTorchMLPWrapper:
         patience: int = 10,
         device: str = "cpu",
     ):
+        """Inicializa o wrapper com hiperparâmetros de treino."""
         self.input_dim = input_dim
-        self.hidden_layers = hidden_layers
+        self.hidden_layers = hidden_layers or [64, 32]
         self.dropout_rate = dropout_rate
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.epochs = epochs
         self.patience = patience
 
-        # O DataLoader não funciona bem em MPS com tipos incompatíveis, então manter cpu para tabular.
+        # MPS não funciona bem com tipos incompatíveis para dados tabulares.
         # Caso CUDA esteja disponível, usamos CUDA.
-        self.device = "cuda" if torch.cuda.is_available() and device != "cpu" else "cpu"
+        self.device = (
+            "cuda" if torch.cuda.is_available() and device != "cpu" else "cpu"
+        )
 
         self.model = ChurnMLP(input_dim, hidden_layers, dropout_rate).to(self.device)
         self.criterion = nn.BCEWithLogitsLoss()
@@ -71,7 +77,14 @@ class PyTorchMLPWrapper:
 
         self.best_state_dict = None
 
-    def fit(self, x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray):
+    def fit(
+        self,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_val: np.ndarray,
+        y_val: np.ndarray,
+    ):
+        """Treina a MLP com early stopping baseado na validation loss."""
         train_dataset = TabularDataset(x_train, y_train)
         val_dataset = TabularDataset(x_val, y_val)
 
@@ -132,8 +145,9 @@ class PyTorchMLPWrapper:
         return self
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
-        """Retorna as probabilidades [probabilidade_classe_0, probabilidade_classe_1]
-        para ser compatível com scikit-learn.
+        """Retorna probabilidades por classe.
+
+        Formato: [prob_classe_0, prob_classe_1], compatível com scikit-learn.
         """
         self.model.eval()
         dataset = TabularDataset(x)
