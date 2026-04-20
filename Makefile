@@ -1,4 +1,4 @@
-.PHONY: install lint format test run train clean
+.PHONY: install lint format test run train clean reset
 
 install:
 	pip install --upgrade pip
@@ -22,7 +22,7 @@ train:
 	python -m churn_predictor.pipelines.neural_network
 
 clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-	find . -type d -name ".ruff_cache" -exec rm -rf {} +
-	rm -rf build/ dist/ *.egg-info/
+	@python -c "import shutil, glob; [shutil.rmtree(p, ignore_errors=True) for p in glob.glob('**/__pycache__', recursive=True) + ['.pytest_cache', '.ruff_cache', 'build', 'dist'] + glob.glob('**/*.egg-info', recursive=True)]"
+
+reset: clean
+	@python -c "import shutil, os; shutil.rmtree('mlruns', ignore_errors=True); shutil.rmtree('models', ignore_errors=True); os.makedirs('models', exist_ok=True); open('models/.gitkeep', 'w').close()"

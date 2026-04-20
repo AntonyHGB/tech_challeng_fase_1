@@ -67,9 +67,7 @@ class PyTorchMLPWrapper:
 
         # MPS não funciona bem com tipos incompatíveis para dados tabulares.
         # Caso CUDA esteja disponível, usamos CUDA.
-        self.device = (
-            "cuda" if torch.cuda.is_available() and device != "cpu" else "cpu"
-        )
+        self.device = "cuda" if torch.cuda.is_available() and device != "cpu" else "cpu"
 
         self.model = ChurnMLP(input_dim, hidden_layers, dropout_rate).to(self.device)
         self.criterion = nn.BCEWithLogitsLoss()
