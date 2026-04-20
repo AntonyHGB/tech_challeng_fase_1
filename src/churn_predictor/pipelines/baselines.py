@@ -5,6 +5,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+import joblib
 import mlflow
 import numpy as np
 import pandas as pd
@@ -43,7 +44,8 @@ class BusinessMetricConfig:
 
 
 def build_preprocessor(x: pd.DataFrame) -> ColumnTransformer:
-    """Cria pré-processamento padrão:
+    """Cria pré-processamento padrão.
+
     - numéricas: imputação mediana + escala
     - categóricas: imputação mais frequente + one-hot
     """
@@ -184,7 +186,8 @@ def run_baselines(
     random_state: int = 42,
     test_size: float = 0.2,
 ) -> pd.DataFrame:
-    """Fluxo completo da etapa 1:
+    """Fluxo completo da etapa 1.
+
     dados -> treino -> avaliação -> tracking -> csv final.
     """
     configure_logging()
@@ -247,6 +250,20 @@ def run_baselines(
     metrics_df = pd.DataFrame(rows).sort_values(by="auc_roc", ascending=False)
     DEFAULT_METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
     metrics_df.to_csv(DEFAULT_METRICS_PATH, index=False)
+
+    # Serializa o melhor pipeline (maior AUC-ROC) para servir na API.
+    best_model_name = metrics_df.iloc[0]["model"]
+    best_pipeline = models[best_model_name]
+    best_model_path = DEFAULT_METRICS_PATH.parent / "best_model.joblib"
+    joblib.dump(best_pipeline, best_model_path)
+
+    log_event(
+        LOGGER,
+        "best_model_saved",
+        event="best_model_saved",
+        model=best_model_name,
+        step="serialize",
+    )
 
     log_event(
         LOGGER,

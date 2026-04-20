@@ -5,16 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ml-tech-challenge-fase-1"
 version = "0.1.0"
-description = "Projeto de churn (Etapa 1): EDA, baselines e tracking com MLflow."
+description = "Projeto de churn: EDA, baselines, MLP PyTorch, API FastAPI e tracking MLflow."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-  { name = "Equipe 20" },
-  { name = "Antonio Henrique" },
-  { name = "Joao Furlan" },
-  { name = "Dionathan" },
-  { name = "Bruno" },
-  { name = "Paulo" }
+  { name = "Antonio Henrique" }
 ]
 dependencies = [
   "numpy>=1.26,<3.0",
@@ -24,6 +19,10 @@ dependencies = [
   "matplotlib>=3.8,<4.0",
   "seaborn>=0.13,<1.0",
   "torch>=2.0,<3.0",
+  "fastapi>=0.111,<1.0",
+  "uvicorn[standard]>=0.29,<1.0",
+  "pydantic>=2.7,<3.0",
+  "joblib>=1.4,<2.0",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +33,7 @@ dev = [
   "jupyter>=1.0,<2.0",
   "mypy>=1.10,<2.0",
   "pandas-stubs>=2.2,<3.0",
+  "httpx>=0.27,<1.0",
 ]
 
 [tool.setuptools]
@@ -81,6 +81,7 @@ ignore = [
     "D100", # missing docstring in public module
     "D104", # missing docstring in public package
     "PD901", # df is a bad variable name. (it's common in DS)
+    "TC002", # move third-party import into TYPE_CHECKING (false positives on runtime deps)
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -34,7 +34,8 @@ def run_neural_network_pipeline(
     test_size: float = 0.2,
     val_size: float = 0.2,
 ) -> pd.DataFrame:
-    """Fluxo completo da etapa 2:
+    """Fluxo completo da etapa 2.
+
     dados -> pré-processamento -> treino PyTorch MLP -> avaliação -> tracking.
     """
     configure_logging()
@@ -58,7 +59,6 @@ def run_neural_network_pipeline(
     # 2. Construir e fittar o preprocessor
     preprocessor = build_preprocessor(x_train_full)
     x_train_full_prep = preprocessor.fit_transform(x_train_full)
-    x_test_prep = preprocessor.transform(x_test)
 
     # 3. Dividir treino em treino e validação (para Early Stopping do PyTorch)
     # Como já é um array numpy, passamos numpy arrays para o split
@@ -99,9 +99,8 @@ def run_neural_network_pipeline(
     mlp_model.fit(x_train_prep, y_train, x_val_prep, y_val)
 
     # 6. Avaliação
-    # O evaluate_model original exige um Pipeline ou modelo que tem predict_proba e aceita um dataframe X_test.
-    # Como nós separamos o preprocessamento da rede, precisamos criar uma classe "MockPipeline"
-    # ou alterar a chamada. Vamos criar um wrapper simples de runtime.
+    # evaluate_model exige predict_proba + aceita DataFrame X_test.
+    # Criamos um wrapper para conectar preprocessor + rede.
     class MockPipeline:
         def predict_proba(self, x_test_df):
             x_prep = preprocessor.transform(x_test_df)

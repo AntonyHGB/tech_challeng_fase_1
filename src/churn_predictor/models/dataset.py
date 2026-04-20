@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 
 class TabularDataset(Dataset):
     """Dataset PyTorch genérico para dados tabulares numéricos.
+
     Recebe arrays NumPy (típicos de saída de ColumnTransformer)
     e os converte para tensores PyTorch.
     """
