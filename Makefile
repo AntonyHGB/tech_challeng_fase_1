@@ -15,7 +15,8 @@ test:
 	pytest
 
 run:
-	uvicorn churn_predictor.api.app:app --reload --host 0.0.0.0 --port 8000
+	@echo "Iniciando a API. Acesse a documentacao em: http://127.0.0.1:8000/docs"
+	uvicorn churn_predictor.api.app:app --reload --host 127.0.0.1 --port 8000
 
 train:
 	python -m churn_predictor.pipelines.baselines
@@ -32,3 +33,5 @@ docker-build:
 
 docker-run:
 	docker run -p 8000:8000 churn_predictor_api:latest
+
+

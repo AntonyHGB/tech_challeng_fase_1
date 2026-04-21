@@ -1,38 +1,29 @@
-FROM python:3.10-slim as builder
-
-WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install python dependencies
-COPY pyproject.toml /app/
-RUN pip install --upgrade pip setuptools wheel && \
-    pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -e .
-
-# Final stage
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Run as non-root user
+# Cria usuário não-root por segurança
 RUN useradd -m -u 1000 appuser
 
-COPY --from=builder /app/wheels /wheels
-COPY --from=builder /app/pyproject.toml .
+# Copia arquivos base para instalação das dependências
+COPY pyproject.toml README.md /app/
 
-# Install dependencies from wheels
-RUN pip install --no-cache /wheels/*
+# Cria uma estrutura dummy de src para o pip conseguir instalar as dependências
+# Isso garante que o Docker faça cache das bibliotecas pesadas sem quebrar no pip install
+RUN mkdir -p /app/src/churn_predictor && touch /app/src/churn_predictor/__init__.py
 
-# Copy application code
+# Instala todas as dependências do projeto
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir .
+
+# Agora copia o código-fonte real e os artefatos
 COPY src /app/src
 COPY models /app/models
 
-# Install the application itself
-RUN pip install -e .
+# Instala o projeto novamente (apenas o código do app, sem reinstalar libs) para linkar o source correto
+RUN pip install --no-cache-dir --no-deps .
 
+# Ajusta as permissões
 RUN chown -R appuser:appuser /app
 USER appuser
 

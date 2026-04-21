@@ -174,7 +174,7 @@ make train
 ### 4.5 Subir a API de inferência
 
 ```bash
-uvicorn churn_predictor.api.app:app --reload --host 0.0.0.0 --port 8000
+uvicorn churn_predictor.api.app:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Ou usando o Makefile:
@@ -183,9 +183,9 @@ make run
 ```
 
 A API estará disponível em:
-- **Documentação interativa:** `http://localhost:8000/docs`
-- **Health check:** `GET http://localhost:8000/health`
-- **Predição:** `POST http://localhost:8000/predict`
+- **Documentação interativa:** `http://127.0.0.1:8000/docs`
+- **Health check:** `GET http://127.0.0.1:8000/health`
+- **Predição:** `POST http://127.0.0.1:8000/predict`
 
 **Exemplo de payload para `/predict`:**
 ```json
@@ -221,8 +221,22 @@ A API estará disponível em:
 }
 ```
 
-### 4.6 Visualizar experimentos no MLflow
+## 4.6 Subir a API via Docker
 
+Caso você tenha o [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado na sua máquina, você pode subir toda a API sem precisar do ambiente Python local.
+
+Para construir a imagem:
+```bash
+make docker-build
+```
+
+Para rodar o contêiner:
+```bash
+make docker-run
+```
+A API estará exposta da mesma forma em `http://127.0.0.1:8000`.
+
+### 4.7 Rastrear experimentos com MLflow
 ```bash
 mlflow ui
 ```
@@ -235,7 +249,7 @@ Abrir no navegador: `http://127.0.0.1:5000`
 jupyter notebook notebooks/01_eda_baselines.ipynb
 ```
 
-### 4.8 Rodar testes
+### 4.9 Rodar testes
 ```bash
 pytest
 ```
@@ -245,7 +259,7 @@ Ou:
 make test
 ```
 
-### 4.9 Rodar linter
+### 4.10 Rodar linter
 ```bash
 ruff check src/ tests/
 ```
