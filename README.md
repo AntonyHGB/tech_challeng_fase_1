@@ -57,6 +57,15 @@
 - `docs/ml_canvas.md`  
   Define problema de negócio, stakeholders, métricas técnicas e de negócio, riscos e SLOs.
 
+- `docs/model_card.md`  
+  Detalhes de performance, vieses, limitações e uso pretendido do modelo.
+
+- `docs/architecture_and_deployment.md`  
+  Arquitetura de deploy (Real-Time API), fluxo de dados e justificativas técnicas.
+
+- `docs/monitoring_plan.md`  
+  Métricas de sistema, de dados e modelo, com playbook de respostas a incidentes.
+
 - `notebooks/01_eda_baselines.ipynb`  
   EDA completa + execução e comparação dos baselines.
 
@@ -300,3 +309,13 @@ git diff --staged
 - ruff
 - jupyter
 - httpx, mypy
+
+---
+
+## 8) Arquitetura e Documentação Adicional (Etapa 4)
+
+De acordo com a Etapa 4 do desafio, documentos detalhados de governança e infraestrutura foram criados na pasta `docs/`:
+
+- **Arquitetura de Deploy:** A solução adota inferência em tempo real via **FastAPI**, em vez de *batch*, permitindo que atendentes ou aplicativos identifiquem a propensão de churn em tempo real e reajam imediatamente (ex: concedendo um desconto no ato de um contato do cliente). Para detalhes e diagramas, veja [docs/architecture_and_deployment.md](docs/architecture_and_deployment.md).
+- **Model Card:** O documento de transparência listando as métricas otimizadas, baselines e tratamento de vieses demográficos encontra-se em [docs/model_card.md](docs/model_card.md).
+- **Plano de Monitoramento:** Para combater a degradação silenciosa (data drift e concept drift), o plano de resiliência e thresholds de alerta pode ser lido em [docs/monitoring_plan.md](docs/monitoring_plan.md).
