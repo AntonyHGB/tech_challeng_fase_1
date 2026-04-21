@@ -63,7 +63,11 @@ def run_neural_network_pipeline(
     mlflow.set_experiment(experiment_name)
 
     model_name = "pytorch_mlp"
-    input_dim = preprocessor.fit_transform(x_train_full).shape[1]
+    # Calcula input_dim usando um clone temporário para não consumir o preprocessor original
+    from sklearn.base import clone
+
+    _temp_prep = clone(preprocessor)
+    input_dim = _temp_prep.fit_transform(x_train_full).shape[1]
 
     log_event(
         LOGGER,

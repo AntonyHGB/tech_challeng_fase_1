@@ -148,6 +148,10 @@ class PyTorchMLPWrapper(BaseEstimator, ClassifierMixin):
         if self.best_state_dict is not None:
             self.model.load_state_dict(self.best_state_dict)
 
+        # Atributos obrigatórios para sklearn considerar o estimator como fitted
+        self.classes_ = np.array([0, 1])
+        self.n_features_in_ = x.shape[1]
+
         return self
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
