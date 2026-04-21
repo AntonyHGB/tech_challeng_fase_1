@@ -94,7 +94,7 @@
   Endpoint `POST /predict` — carrega o modelo, pré-processa e retorna probabilidade de churn.
 
 - `tests/`  
-  17 testes automatizados: smoke (importações), schema (validação Pydantic) e API (endpoints).
+  23 testes automatizados (smoke, schema, data, model loader e api).
 
 - `Makefile`  
   Comandos prontos para lint, testes, treinamento e execução da API.
@@ -264,10 +264,12 @@ make lint
 | `make install` | Instala todas as dependências |
 | `make train` | Treina baselines + MLP e serializa o modelo |
 | `make run` | Sobe a API FastAPI em `localhost:8000` |
-| `make test` | Executa os 17 testes automatizados |
+| `make test` | Executa os 23 testes automatizados (smoke, schemas, data, api) |
 | `make lint` | Verifica o código com ruff |
 | `make format` | Formata e corrige o código automaticamente |
 | `make clean` | Remove caches e artefatos de build |
+| `make docker-build` | Cria a imagem Docker local da API |
+| `make docker-run` | Sobe o contêiner Docker na porta 8000 |
 
 ---
 

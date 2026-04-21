@@ -1,4 +1,4 @@
-.PHONY: install lint format test run train clean reset
+.PHONY: install lint format test run train clean reset docker-build docker-run
 
 install:
 	pip install --upgrade pip
@@ -26,3 +26,9 @@ clean:
 
 reset: clean
 	@python -c "import shutil, os; shutil.rmtree('mlruns', ignore_errors=True); shutil.rmtree('models', ignore_errors=True); os.makedirs('models', exist_ok=True); open('models/.gitkeep', 'w').close()"
+
+docker-build:
+	docker build -t churn_predictor_api:latest .
+
+docker-run:
+	docker run -p 8000:8000 churn_predictor_api:latest

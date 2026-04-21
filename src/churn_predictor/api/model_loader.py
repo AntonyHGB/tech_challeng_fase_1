@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from pathlib import Path
 
 import joblib
@@ -13,10 +14,11 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_MODEL_PATH = Path("models/best_model.joblib")
 
 _cached_model: Pipeline | None = None
+_lock = threading.Lock()
 
 
 def load_model(path: Path = DEFAULT_MODEL_PATH) -> Pipeline:
-    """Carrega o pipeline treinado do disco (com cache em memória).
+    """Carrega o pipeline treinado do disco (com cache em memória thread-safe).
 
     Args:
         path: Caminho para o arquivo .joblib do modelo.
@@ -32,19 +34,25 @@ def load_model(path: Path = DEFAULT_MODEL_PATH) -> Pipeline:
     if _cached_model is not None:
         return _cached_model
 
-    if not path.exists():
-        msg = (
-            f"Modelo não encontrado em '{path}'. "
-            "Execute 'python -m churn_predictor.pipelines.baselines' primeiro."
-        )
-        raise FileNotFoundError(msg)
+    with _lock:
+        if _cached_model is not None:
+            return _cached_model
 
-    _cached_model = joblib.load(path)
-    LOGGER.info("model_loaded", extra={"path": str(path)})
+        if not path.exists():
+            msg = (
+                f"Modelo não encontrado em '{path}'. "
+                "Execute 'python -m churn_predictor.pipelines.baselines' primeiro."
+            )
+            raise FileNotFoundError(msg)
+
+        _cached_model = joblib.load(path)
+        LOGGER.info("model_loaded", extra={"path": str(path)})
+
     return _cached_model
 
 
 def reset_model_cache() -> None:
     """Limpa o cache do modelo (útil para testes)."""
     global _cached_model
-    _cached_model = None
+    with _lock:
+        _cached_model = None

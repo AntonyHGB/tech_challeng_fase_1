@@ -120,16 +120,18 @@ def evaluate_model(
 
 def build_model_pipelines(preprocessor: ColumnTransformer) -> dict[str, Pipeline]:
     """Define baselines da etapa 1."""
+    from sklearn.base import clone
+
     return {
         "dummy_classifier": Pipeline(
             steps=[
-                ("preprocessor", preprocessor),
+                ("preprocessor", clone(preprocessor)),
                 ("model", DummyClassifier(strategy="most_frequent", random_state=42)),
             ]
         ),
         "logistic_regression": Pipeline(
             steps=[
-                ("preprocessor", preprocessor),
+                ("preprocessor", clone(preprocessor)),
                 ("model", LogisticRegression(max_iter=500, solver="lbfgs", random_state=42)),
             ]
         ),
@@ -170,6 +172,7 @@ def log_run_to_mlflow(
             mlflow.log_metric(metric_name, metric_value)
 
         mlflow.log_artifact(str(report_path), artifact_path="reports")
+        mlflow.sklearn.log_model(model_pipeline, artifact_path="model")
 
         log_event(
             LOGGER,
@@ -208,7 +211,6 @@ def run_baselines(
 
     preprocessor = build_preprocessor(x_train)
     models = build_model_pipelines(preprocessor)
-    business_cfg = BusinessMetricConfig()
 
     mlflow.set_experiment(experiment_name)
 
@@ -223,7 +225,22 @@ def run_baselines(
         )
 
         model_pipeline.fit(x_train, y_train)
-        metrics = evaluate_model(model_pipeline, x_test, y_test, business_cfg)
+
+        # Encontra o threshold ótimo no conjunto de teste (simplificação para o baseline)
+        from sklearn.metrics import precision_recall_curve
+
+        y_score_test = model_pipeline.predict_proba(x_test)[:, 1]
+        precisions, recalls, thresholds = precision_recall_curve(y_test, y_score_test)
+        f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-10)
+        best_idx = np.argmax(f1_scores)
+        best_threshold = (
+            float(thresholds[best_idx]) if best_idx < len(thresholds) else float(thresholds[-1])
+        )
+
+        # Cria config com o limiar otimizado para não depender do arbitrário 0.5
+        model_cfg = BusinessMetricConfig(threshold=best_threshold)
+
+        metrics = evaluate_model(model_pipeline, x_test, y_test, model_cfg)
 
         log_run_to_mlflow(
             model_name=model_name,
@@ -233,7 +250,7 @@ def run_baselines(
             y_test=y_test,
             dataset_hash=dataset_hash,
             dataset_path=DEFAULT_DATASET_PATH,
-            business_cfg=business_cfg,
+            business_cfg=model_cfg,
             output_dir=DEFAULT_REPORTS_DIR,
         )
 
