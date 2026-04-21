@@ -5,6 +5,7 @@ import logging
 import mlflow
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
 from churn_predictor.data import (
     clean_telco_dataset,
@@ -32,7 +33,6 @@ def run_neural_network_pipeline(
     experiment_name: str = "telco-churn-baselines",
     random_state: int = 42,
     test_size: float = 0.2,
-    val_size: float = 0.2,
 ) -> pd.DataFrame:
     """Fluxo completo da etapa 2.
 
@@ -56,25 +56,14 @@ def run_neural_network_pipeline(
         stratify=y,
     )
 
-    # 2. Construir e fittar o preprocessor
+    # 2. Construir preprocessor
     preprocessor = build_preprocessor(x_train_full)
-    x_train_full_prep = preprocessor.fit_transform(x_train_full)
-
-    # 3. Dividir treino em treino e validação (para Early Stopping do PyTorch)
-    # Como já é um array numpy, passamos numpy arrays para o split
-    x_train_prep, x_val_prep, y_train, y_val = train_test_split(
-        x_train_full_prep,
-        y_train_full.values,
-        test_size=val_size,
-        random_state=random_state,
-        stratify=y_train_full.values,
-    )
 
     business_cfg = BusinessMetricConfig()
     mlflow.set_experiment(experiment_name)
 
     model_name = "pytorch_mlp"
-    input_dim = x_train_prep.shape[1]
+    input_dim = preprocessor.fit_transform(x_train_full).shape[1]
 
     log_event(
         LOGGER,
@@ -84,7 +73,7 @@ def run_neural_network_pipeline(
         step="train",
     )
 
-    # 4. Inicializa o Wrapper
+    # 3. Inicializa o Wrapper
     mlp_model = PyTorchMLPWrapper(
         input_dim=input_dim,
         hidden_layers=[128, 64, 32],
@@ -95,24 +84,24 @@ def run_neural_network_pipeline(
         patience=15,
     )
 
+    # 4. Cria a Pipeline Completa
+    mlp_pipeline = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("model", mlp_model),
+        ]
+    )
+
     # 5. Treinamento
-    mlp_model.fit(x_train_prep, y_train, x_val_prep, y_val)
+    mlp_pipeline.fit(x_train_full, y_train_full.values)
 
     # 6. Avaliação
-    # evaluate_model exige predict_proba + aceita DataFrame X_test.
-    # Criamos um wrapper para conectar preprocessor + rede.
-    class MockPipeline:
-        def predict_proba(self, x_test_df):
-            x_prep = preprocessor.transform(x_test_df)
-            return mlp_model.predict_proba(x_prep)
-
-    mock_pipeline = MockPipeline()
-    metrics = evaluate_model(mock_pipeline, x_test, y_test, business_cfg)
+    metrics = evaluate_model(mlp_pipeline, x_test, y_test, business_cfg)
 
     # 7. MLflow Tracking
     log_run_to_mlflow(
         model_name=model_name,
-        model_pipeline=mock_pipeline,  # Dummy para gerar relatório
+        model_pipeline=mlp_pipeline,
         metrics=metrics,
         x_test=x_test,
         y_test=y_test,

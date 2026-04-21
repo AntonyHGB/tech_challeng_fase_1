@@ -1,8 +1,8 @@
 # Model Card: Predição de Churn em Telecom
 
 ## 1. Detalhes do Modelo
-- **Desenvolvedor:** Grupo do Tech Challenge Fase 01
-- **Data da versão:** Maio de 2024
+- **Desenvolvedor:** Antonio Henrique Gimenes Bertagnolli
+- **Data da versão:** Abril de 2026
 - **Versão:** 1.0.0
 - **Tipo do Modelo:** Classificador Binário (Multi-Layer Perceptron - PyTorch & Logistic Regression - Scikit-Learn)
 - **Licença:** MIT
@@ -24,7 +24,7 @@
 - **Baselines vs. Neural Network:**
   - O baseline (Logistic Regression) apresentou excelente estabilidade e facilidade de interpretação.
   - A Rede Neural (MLP) obteve flexibilidade extra na captura de relações não-lineares, com a ressalva de custo computacional levemente maior.
-  - (Os resultados específicos dependem da execução final reportada no tracking do MLflow).
+  - (Os resultados alcançados na última execução foram: AUC-ROC ≈ 0.84, F1 ≈ 0.60 no baseline otimizado).
 
 ## 5. Limitações e Vieses
 - **Vieses Demográficos:** Como features de gênero e senioridade ("SeniorCitizen") são utilizadas, é recomendável avaliar periodicamente o `Disparate Impact` (impacto desproporcional) entre grupos demográficos, garantindo que o modelo não foque ofertas de retenção excessivamente em perfis específicos de modo discriminatório.

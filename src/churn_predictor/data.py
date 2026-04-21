@@ -75,9 +75,15 @@ def clean_telco_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """Limpeza mínima do dataset da IBM para manter o pipeline simples.
 
     Regras:
+    - valida a presença de colunas mínimas
     - converte TotalCharges para numérico (inválidos viram NaN)
     - remove customerID por não agregar sinal útil ao baseline
     """
+    required_columns = ["Churn", "TotalCharges"]
+    missing = [col for col in required_columns if col not in df.columns]
+    if missing:
+        raise ValueError(f"O dataset não possui as colunas obrigatórias: {missing}")
+
     data = df.copy()
 
     if "TotalCharges" in data.columns:
@@ -99,7 +105,14 @@ def split_xy(df: pd.DataFrame, target_col: str = "Churn") -> tuple[pd.DataFrame,
     if target_col not in df.columns:
         raise ValueError(f"target column '{target_col}' not found in dataset")
 
-    y = df[target_col].map({"Yes": 1, "No": 0}).astype(int)
+    # Mapeamento robusto ignorando case e espaços
+    y_raw = df[target_col].astype(str).str.lower().str.strip()
+    y_mapped = y_raw.map({"yes": 1, "no": 0})
+
+    if y_mapped.isna().any():
+        raise ValueError(f"Valores inesperados encontrados na coluna target '{target_col}'")
+
+    y = y_mapped.astype(int)
     x = df.drop(columns=[target_col])
     return x, y
 

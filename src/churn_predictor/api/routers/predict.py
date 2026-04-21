@@ -44,27 +44,8 @@ async def predict(request: PredictionRequest) -> PredictionResponse:
     """Recebe dados de um cliente e retorna a predição de churn."""
     pipeline = load_model()
 
-    row = {
-        "gender": request.gender,
-        "SeniorCitizen": request.senior_citizen,
-        "Partner": request.partner,
-        "Dependents": request.dependents,
-        "tenure": request.tenure,
-        "PhoneService": request.phone_service,
-        "MultipleLines": request.multiple_lines,
-        "InternetService": request.internet_service,
-        "OnlineSecurity": request.online_security,
-        "OnlineBackup": request.online_backup,
-        "DeviceProtection": request.device_protection,
-        "TechSupport": request.tech_support,
-        "StreamingTV": request.streaming_tv,
-        "StreamingMovies": request.streaming_movies,
-        "Contract": request.contract,
-        "PaperlessBilling": request.paperless_billing,
-        "PaymentMethod": request.payment_method,
-        "MonthlyCharges": request.monthly_charges,
-        "TotalCharges": request.total_charges,
-    }
+    # Converte Pydantic model usando aliases para bater com FEATURE_COLUMNS
+    row = request.model_dump(by_alias=True)
 
     input_df = pd.DataFrame([row], columns=FEATURE_COLUMNS)
 

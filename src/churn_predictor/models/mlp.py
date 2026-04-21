@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 from churn_predictor.models.dataset import TabularDataset
@@ -39,7 +41,7 @@ class ChurnMLP(nn.Module):
         return self.network(x)
 
 
-class PyTorchMLPWrapper:
+class PyTorchMLPWrapper(BaseEstimator, ClassifierMixin):
     """Wrapper compatível com scikit-learn (possui fit e predict_proba).
 
     Implementa Early Stopping internamente.
@@ -77,12 +79,14 @@ class PyTorchMLPWrapper:
 
     def fit(
         self,
-        x_train: np.ndarray,
-        y_train: np.ndarray,
-        x_val: np.ndarray,
-        y_val: np.ndarray,
+        x: np.ndarray,
+        y: np.ndarray,
     ):
-        """Treina a MLP com early stopping baseado na validation loss."""
+        """Treina a MLP com early stopping baseado na validation loss (split interno)."""
+        x_train, x_val, y_train, y_val = train_test_split(
+            x, y, test_size=0.2, random_state=42, stratify=y
+        )
+
         train_dataset = TabularDataset(x_train, y_train)
         val_dataset = TabularDataset(x_val, y_val)
 
@@ -136,6 +140,10 @@ class PyTorchMLPWrapper:
                     f"Early stopping triggered at epoch {epoch}. Best Val Loss: {best_val_loss:.4f}"
                 )
                 break
+
+        # Se por algum motivo a val_loss nunca melhorar (ex: piora desde a época 0), salva o final
+        if self.best_state_dict is None:
+            self.best_state_dict = copy.deepcopy(self.model.state_dict())
 
         if self.best_state_dict is not None:
             self.model.load_state_dict(self.best_state_dict)
