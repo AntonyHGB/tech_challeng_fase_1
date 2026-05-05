@@ -23,6 +23,7 @@ dependencies = [
   "uvicorn[standard]>=0.29,<1.0",
   "pydantic>=2.7,<3.0",
   "joblib>=1.4,<2.0",
+  "pandera>=0.19,<1.0",
 ]
 
 [project.optional-dependencies]
