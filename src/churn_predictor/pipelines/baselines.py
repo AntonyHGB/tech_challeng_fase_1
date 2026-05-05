@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, classification_report, f1_score, roc_auc_score
@@ -119,7 +120,12 @@ def evaluate_model(
 
 
 def build_model_pipelines(preprocessor: ColumnTransformer) -> dict[str, Pipeline]:
-    """Define baselines da etapa 1."""
+    """Define baselines da etapa 1.
+
+    Inclui modelos lineares (Logistic Regression) e baseados em árvore
+    (Random Forest e Gradient Boosting) para cobrir famílias diferentes
+    de algoritmos na comparação com a MLP.
+    """
     from sklearn.base import clone
 
     return {
@@ -133,6 +139,35 @@ def build_model_pipelines(preprocessor: ColumnTransformer) -> dict[str, Pipeline
             steps=[
                 ("preprocessor", clone(preprocessor)),
                 ("model", LogisticRegression(max_iter=500, solver="lbfgs", random_state=42)),
+            ]
+        ),
+        "random_forest": Pipeline(
+            steps=[
+                ("preprocessor", clone(preprocessor)),
+                (
+                    "model",
+                    RandomForestClassifier(
+                        n_estimators=300,
+                        max_depth=None,
+                        min_samples_leaf=2,
+                        n_jobs=-1,
+                        random_state=42,
+                    ),
+                ),
+            ]
+        ),
+        "gradient_boosting": Pipeline(
+            steps=[
+                ("preprocessor", clone(preprocessor)),
+                (
+                    "model",
+                    GradientBoostingClassifier(
+                        n_estimators=200,
+                        learning_rate=0.05,
+                        max_depth=3,
+                        random_state=42,
+                    ),
+                ),
             ]
         ),
     }
