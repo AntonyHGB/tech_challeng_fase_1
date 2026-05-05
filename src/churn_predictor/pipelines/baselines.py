@@ -15,7 +15,7 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, classification_report, f1_score, roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -98,6 +98,46 @@ def compute_business_metric(
         "business_contact_cost_est": round(contact_cost_est, 2),
         "business_net_value_est": round(net_value_est, 2),
     }
+
+
+def cross_validate_model(
+    model: Pipeline,
+    x_train: pd.DataFrame,
+    y_train: pd.Series,
+    *,
+    n_splits: int = 5,
+    random_state: int = 42,
+) -> dict[str, float]:
+    """Executa validação cruzada estratificada no conjunto de treino.
+
+    Reporta média e desvio padrão das métricas de classificação ao longo
+    dos folds, garantindo que cada fold preserve a proporção de classes
+    (importante em datasets desbalanceados como o de churn).
+    """
+    cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    scoring = {
+        "auc_roc": "roc_auc",
+        "pr_auc": "average_precision",
+        "f1": "f1",
+    }
+
+    cv_results = cross_validate(
+        model,
+        x_train,
+        y_train,
+        cv=cv,
+        scoring=scoring,
+        n_jobs=-1,
+        return_train_score=False,
+    )
+
+    metrics: dict[str, float] = {}
+    for metric_name in scoring:
+        scores = cv_results[f"test_{metric_name}"]
+        metrics[f"cv_{metric_name}_mean"] = float(scores.mean())
+        metrics[f"cv_{metric_name}_std"] = float(scores.std())
+
+    return metrics
 
 
 def evaluate_model(
@@ -259,6 +299,21 @@ def run_baselines(
             step="train",
         )
 
+        # Validação cruzada estratificada no conjunto de treino:
+        # estima robustez (média ± std) antes do fit final no train completo.
+        from sklearn.base import clone as _clone
+
+        cv_metrics = cross_validate_model(_clone(model_pipeline), x_train, y_train)
+        log_event(
+            LOGGER,
+            "cross_validation_completed",
+            event="cross_validation_completed",
+            model=model_name,
+            step="cv",
+            cv_auc_roc_mean=cv_metrics["cv_auc_roc_mean"],
+            cv_auc_roc_std=cv_metrics["cv_auc_roc_std"],
+        )
+
         model_pipeline.fit(x_train, y_train)
 
         # Encontra o threshold ótimo no conjunto de teste (simplificação para o baseline)
@@ -276,6 +331,8 @@ def run_baselines(
         model_cfg = BusinessMetricConfig(threshold=best_threshold)
 
         metrics = evaluate_model(model_pipeline, x_test, y_test, model_cfg)
+        # Combina métricas de holdout (test) com métricas de CV no train.
+        metrics.update(cv_metrics)
 
         log_run_to_mlflow(
             model_name=model_name,
