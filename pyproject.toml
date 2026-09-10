@@ -85,6 +85,10 @@ ignore = [
     "TC002", # move third-party import into TYPE_CHECKING (false positives on runtime deps)
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Nos testes, legibilidade vale mais que a formalidade de docstrings.
+"tests/**/*.py" = ["D100", "D101", "D102", "D103", "D104"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
