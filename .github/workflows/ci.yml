@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-e-testes:
+    name: Lint e testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      # Instala só o necessário para os testes (sem o grupo dev com jupyter/mypy).
+      - run: pip install -e .
+      - run: pip install pytest ruff httpx
+      - run: ruff check src/ tests/
+      - run: pytest
